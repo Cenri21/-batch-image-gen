@@ -20,29 +20,24 @@
     .header h1 { font-family:'Barlow Condensed',sans-serif;font-size:clamp(36px,5vw,64px);font-weight:900;line-height:0.9;color:var(--white);letter-spacing:-1px;text-transform:uppercase; }
     .header h1 span { color:var(--gold);font-style:italic; }
     .header-sub { font-size:11px;color:var(--muted);margin-top:10px;line-height:1.6; }
-    .status-badge { display:flex;align-items:center;gap:8px;padding:8px 16px;border:1px solid var(--border2);font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;white-space:nowrap; }
-    .status-badge.active { border-color:var(--green);color:var(--green); }
-    .status-dot { width:6px;height:6px;border-radius:50%;background:currentColor;animation:pulse 2s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
     .main { display:grid;grid-template-columns:380px 1fr;min-height:calc(100vh - 120px); }
     .sidebar { border-right:1px solid var(--border2);padding:32px;display:flex;flex-direction:column;gap:28px; }
     .field-group { display:flex;flex-direction:column;gap:8px; }
     .field-label { font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold-dim);display:flex;align-items:center;gap:8px; }
     .field-label::before { content:attr(data-n);display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border:1px solid var(--gold-dim);font-size:9px;flex-shrink:0; }
     .divider { height:1px;background:var(--border); }
-    input[type="password"],input[type="text"],select,textarea { background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:11px 14px;font-family:'Share Tech Mono',monospace;font-size:12px;width:100%;outline:none;transition:border-color 0.15s,background 0.15s;-webkit-appearance:none; }
-    input:focus,select:focus,textarea:focus { border-color:var(--gold);background:var(--surface2); }
-    input::placeholder,textarea::placeholder { color:var(--muted); }
+    select,textarea { background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:11px 14px;font-family:'Share Tech Mono',monospace;font-size:12px;width:100%;outline:none;transition:border-color 0.15s,background 0.15s;-webkit-appearance:none; }
+    select:focus,textarea:focus { border-color:var(--gold);background:var(--surface2); }
+    textarea::placeholder { color:var(--muted); }
     select { cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23c9a84c' d='M5 6L0 0h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px; }
     select option { background:var(--surface2); }
-    .key-row { display:grid;grid-template-columns:1fr auto;gap:8px; }
     .btn { background:var(--gold);color:#0c0b09;border:none;padding:12px 20px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:opacity 0.15s,transform 0.1s;white-space:nowrap; }
     .btn:hover:not(:disabled){opacity:0.85}.btn:active:not(:disabled){transform:translateY(1px)}.btn:disabled{opacity:0.35;cursor:not-allowed}
     .btn-outline { background:transparent;border:1px solid var(--border2);color:var(--muted);font-size:11px;padding:11px 16px; }
     .btn-outline:hover:not(:disabled){border-color:var(--gold);color:var(--gold);opacity:1}
     .btn-success { background:var(--green);color:var(--white);width:100%;padding:14px;font-size:15px; }
     .btn-row { display:grid;grid-template-columns:1fr auto;gap:8px; }
-    textarea { min-height:220px;resize:vertical;line-height:1.7;font-size:11px; }
+    textarea { min-height:260px;resize:vertical;line-height:1.7;font-size:11px; }
     .count-row { display:flex;justify-content:space-between;align-items:center; }
     .prompt-count { font-size:10px;color:var(--muted); }
     .progress-block { display:none;flex-direction:column;gap:8px; }
@@ -73,37 +68,23 @@
     .error-tag { font-size:9px;letter-spacing:2px;color:var(--red);text-transform:uppercase; }
     .error-msg { font-size:10px;color:var(--muted);margin-top:4px;max-width:200px; }
     .download-block { display:none;padding-top:8px; }
-    @media(max-width:860px){.main{grid-template-columns:1fr}.sidebar{border-right:none;border-bottom:1px solid var(--border2)}.header{padding:24px}.header-right{display:none}}
+    @media(max-width:860px){.main{grid-template-columns:1fr}.sidebar{border-right:none;border-bottom:1px solid var(--border2)}.header{padding:24px}}
     @media(max-width:520px){.header h1{font-size:30px}.image-grid{grid-template-columns:1fr 1fr}}
   </style>
 </head>
 <body>
   <header class="header">
     <div>
-      <div class="header-eyebrow">OpenRouter · Nano Banana Pro · Batch Generation</div>
+      <div class="header-eyebrow">Nano Banana Pro · Batch Generation</div>
       <h1>Batch <span>Image</span><br>Generator</h1>
-      <p class="header-sub">Enter prompts · generate via Nano Banana Pro · download ZIP</p>
-    </div>
-    <div class="header-right">
-      <div class="status-badge" id="keyBadge">
-        <span class="status-dot"></span>
-        <span id="keyBadgeText">No API Key</span>
-      </div>
+      <p class="header-sub">Enter prompts · generate · download ZIP</p>
     </div>
   </header>
 
   <div class="main">
     <aside class="sidebar">
       <div class="field-group">
-        <div class="field-label" data-n="1">OpenRouter API Key</div>
-        <div class="key-row">
-          <input type="password" id="apiKey" placeholder="sk-or-..." />
-          <button class="btn" onclick="saveKey()">Save</button>
-        </div>
-      </div>
-      <div class="divider"></div>
-      <div class="field-group">
-        <div class="field-label" data-n="2">Model</div>
+        <div class="field-label" data-n="1">Model</div>
         <select id="model">
           <option value="google/gemini-3-pro-image-preview">Nano Banana Pro — Best Quality</option>
           <option value="google/gemini-3.1-flash-image-preview">Nano Banana 2 — Faster</option>
@@ -111,7 +92,7 @@
       </div>
       <div class="divider"></div>
       <div class="field-group" style="flex:1">
-        <div class="field-label" data-n="3">Prompts — one per line</div>
+        <div class="field-label" data-n="2">Prompts — one per line</div>
         <textarea id="prompts" placeholder="Wide establishing shot of a bombed-out Eastern European roadside in spring 1945...&#10;&#10;Close-up of a Soviet officer examining a map, Eastern Front...&#10;&#10;Aerial view of a destroyed Polish village, overcast sky..."></textarea>
         <div class="count-row">
           <span class="prompt-count" id="promptCount">0 prompts</span>
@@ -153,24 +134,7 @@
   <script>
     let generatedImages = [];
 
-    window.onload = () => {
-      const saved = localStorage.getItem('openrouter_api_key');
-      if (saved) { document.getElementById('apiKey').value = saved; setKeyBadge(true); }
-      updateCounts();
-    };
-
-    function saveKey() {
-      const k = document.getElementById('apiKey').value.trim();
-      if (!k) return;
-      localStorage.setItem('openrouter_api_key', k);
-      setKeyBadge(true);
-    }
-
-    function setKeyBadge(active) {
-      document.getElementById('keyBadge').className = 'status-badge' + (active ? ' active' : '');
-      document.getElementById('keyBadgeText').textContent = active ? 'Key Saved' : 'No API Key';
-    }
-
+    window.onload = () => updateCounts();
     document.getElementById('prompts').addEventListener('input', updateCounts);
 
     function updateCounts() {
@@ -195,52 +159,28 @@
       document.getElementById('progressPct').textContent = pct + '%';
     }
 
-    async function generateImage(prompt, apiKey, model) {
-      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    // Calls our own serverless function — API key stays hidden on the server.
+    async function generateImage(prompt, model) {
+      const res = await fetch('/api/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-          'HTTP-Referer': window.location.origin,
-          'X-Title': 'Batch Image Generator'
-        },
-        body: JSON.stringify({
-          model: model,
-          messages: [{ role: 'user', content: prompt }],
-          modalities: ['image', 'text']
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, model })
       });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err?.error?.message || `HTTP ${res.status}`);
+        throw new Error(err?.error || `HTTP ${res.status}`);
       }
 
       const data = await res.json();
-      const message = data?.choices?.[0]?.message;
-      if (!message) throw new Error('No message in response');
+      const url = data.imageUrl;
+      if (!url) throw new Error('No image returned');
 
-      // OpenRouter returns generated images in message.images[]
-      const images = message.images;
-      if (Array.isArray(images) && images.length > 0) {
-        const url = images[0]?.image_url?.url || images[0]?.url;
-        if (url) {
-          if (url.startsWith('data:')) {
-            const match = url.match(/data:(image\/\w+);base64,(.+)/s);
-            if (match) return { isUrl: false, mimeType: match[1], data: match[2] };
-          }
-          return { isUrl: true, url };
-        }
+      if (url.startsWith('data:')) {
+        const match = url.match(/data:(image\/\w+);base64,(.+)/s);
+        if (match) return { isUrl: false, mimeType: match[1], data: match[2] };
       }
-
-      // Fallback: check content for embedded base64
-      const content = message.content;
-      if (typeof content === 'string') {
-        const b64 = content.match(/data:(image\/\w+);base64,([A-Za-z0-9+/=\n]+)/s);
-        if (b64) return { isUrl: false, mimeType: b64[1], data: b64[2].replace(/\n/g,'') };
-      }
-
-      throw new Error('No image returned by model');
+      return { isUrl: true, url };
     }
 
     async function imgToBase64(url) {
@@ -248,20 +188,15 @@
       const blob = await res.blob();
       return new Promise((resolve) => {
         const reader = new FileReader();
-        reader.onloadend = () => {
-          const b64 = reader.result.split(',')[1];
-          resolve({ data: b64, mimeType: blob.type || 'image/png' });
-        };
+        reader.onloadend = () => resolve({ data: reader.result.split(',')[1], mimeType: blob.type || 'image/png' });
         reader.readAsDataURL(blob);
       });
     }
 
     async function startGeneration() {
-      const apiKey = document.getElementById('apiKey').value.trim();
       const model  = document.getElementById('model').value;
       const prompts = getPrompts();
 
-      if (!apiKey) { setStatus('Enter and save your OpenRouter API key first.', 'err'); return; }
       if (!prompts.length) { setStatus('Enter at least one prompt.', 'err'); return; }
 
       generatedImages = [];
@@ -290,24 +225,17 @@
         const card = document.getElementById(`card-${i}`);
 
         try {
-          const img = await generateImage(prompt, apiKey, model);
-
+          const img = await generateImage(prompt, model);
           let src, b64data, mimeType;
 
           if (img.isUrl) {
             src = img.url;
-            // Try to convert to base64 for ZIP download
             try {
               const converted = await imgToBase64(img.url);
-              b64data = converted.data;
-              mimeType = converted.mimeType;
-            } catch {
-              b64data = null;
-              mimeType = 'image/png';
-            }
+              b64data = converted.data; mimeType = converted.mimeType;
+            } catch { b64data = null; mimeType = 'image/png'; }
           } else {
-            mimeType = img.mimeType;
-            b64data = img.data;
+            mimeType = img.mimeType; b64data = img.data;
             src = `data:${mimeType};base64,${b64data}`;
           }
 
@@ -320,13 +248,8 @@
             </div>`;
 
           if (b64data) {
-            generatedImages.push({
-              filename: `image_${String(i + 1).padStart(3, '0')}.png`,
-              data: b64data,
-              mimeType
-            });
+            generatedImages.push({ filename: `image_${String(i + 1).padStart(3, '0')}.png`, data: b64data, mimeType });
           }
-
           ok++;
         } catch (err) {
           card.className = 'img-card img-error';
@@ -345,7 +268,7 @@
         setStatus(`Done — ${ok} image${ok !== 1 ? 's' : ''} generated${fail ? `, ${fail} failed` : ''}.`, 'ok');
         document.getElementById('downloadBlock').style.display = 'block';
       } else {
-        setStatus('All generations failed. Check your API key and credits.', 'err');
+        setStatus('All generations failed. Try again.', 'err');
         document.getElementById('emptyState').style.display = 'flex';
       }
     }
