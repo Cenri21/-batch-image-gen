@@ -8,480 +8,79 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg:        #0c0b09;
-      --surface:   #141310;
-      --surface2:  #1c1a17;
-      --border:    #2a2720;
-      --border2:   #3a3730;
-      --gold:      #c9a84c;
-      --gold-dim:  #7a6530;
-      --red:       #b04040;
-      --green:     #4a8c5c;
-      --text:      #d8cfbc;
-      --muted:     #6a6254;
-      --white:     #ede8dc;
+      --bg:#0c0b09;--surface:#141310;--surface2:#1c1a17;--border:#2a2720;
+      --border2:#3a3730;--gold:#c9a84c;--gold-dim:#7a6530;--red:#b04040;
+      --green:#4a8c5c;--text:#d8cfbc;--muted:#6a6254;--white:#ede8dc;
     }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Share Tech Mono', monospace;
-      min-height: 100vh;
-      padding: 0;
-      overflow-x: hidden;
-    }
-
-    /* noise overlay */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-      pointer-events: none;
-      z-index: 999;
-      opacity: 0.4;
-    }
-
-    /* ── HEADER ── */
-    .header {
-      border-bottom: 1px solid var(--border2);
-      padding: 32px 48px 24px;
-      display: grid;
-      grid-template-columns: 1fr auto;
-      align-items: end;
-      gap: 24px;
-    }
-
-    .header-eyebrow {
-      font-size: 10px;
-      letter-spacing: 4px;
-      color: var(--gold-dim);
-      text-transform: uppercase;
-      margin-bottom: 10px;
-    }
-
-    .header h1 {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: clamp(36px, 5vw, 64px);
-      font-weight: 900;
-      line-height: 0.9;
-      color: var(--white);
-      letter-spacing: -1px;
-      text-transform: uppercase;
-    }
-
-    .header h1 span {
-      color: var(--gold);
-      font-style: italic;
-    }
-
-    .header-sub {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 10px;
-      line-height: 1.6;
-    }
-
-    .status-badge {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      border: 1px solid var(--border2);
-      font-size: 10px;
-      letter-spacing: 2px;
-      color: var(--muted);
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .status-badge.active {
-      border-color: var(--green);
-      color: var(--green);
-    }
-
-    .status-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: currentColor;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-
-    /* ── MAIN ── */
-    .main {
-      display: grid;
-      grid-template-columns: 380px 1fr;
-      min-height: calc(100vh - 120px);
-    }
-
-    /* ── SIDEBAR ── */
-    .sidebar {
-      border-right: 1px solid var(--border2);
-      padding: 32px;
-      display: flex;
-      flex-direction: column;
-      gap: 28px;
-    }
-
-    .field-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .field-label {
-      font-size: 9px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: var(--gold-dim);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .field-label::before {
-      content: attr(data-n);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 18px;
-      height: 18px;
-      border: 1px solid var(--gold-dim);
-      font-size: 9px;
-      flex-shrink: 0;
-    }
-
-    .divider {
-      height: 1px;
-      background: var(--border);
-    }
-
-    input[type="password"],
-    input[type="text"],
-    select,
-    textarea {
-      background: var(--surface);
-      border: 1px solid var(--border2);
-      color: var(--text);
-      padding: 11px 14px;
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 12px;
-      width: 100%;
-      outline: none;
-      transition: border-color 0.15s, background 0.15s;
-      -webkit-appearance: none;
-    }
-
-    input:focus, select:focus, textarea:focus {
-      border-color: var(--gold);
-      background: var(--surface2);
-    }
-
-    input::placeholder, textarea::placeholder {
-      color: var(--muted);
-    }
-
-    select {
-      cursor: pointer;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23c9a84c' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 14px center;
-      padding-right: 36px;
-    }
-
-    select option { background: var(--surface2); }
-
-    .key-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
-    }
-
-    /* Buttons */
-    .btn {
-      background: var(--gold);
-      color: #0c0b09;
-      border: none;
-      padding: 12px 20px;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: opacity 0.15s, transform 0.1s;
-      white-space: nowrap;
-    }
-
-    .btn:hover:not(:disabled) { opacity: 0.85; }
-    .btn:active:not(:disabled) { transform: translateY(1px); }
-    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
-
-    .btn-outline {
-      background: transparent;
-      border: 1px solid var(--border2);
-      color: var(--muted);
-      font-size: 11px;
-      padding: 11px 16px;
-    }
-
-    .btn-outline:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); opacity: 1; }
-
-    .btn-success {
-      background: var(--green);
-      color: var(--white);
-      width: 100%;
-      padding: 14px;
-      font-size: 15px;
-    }
-
-    .btn-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
-    }
-
-    textarea {
-      min-height: 220px;
-      resize: vertical;
-      line-height: 1.7;
-      font-size: 11px;
-    }
-
-    .count-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .prompt-count {
-      font-size: 10px;
-      color: var(--muted);
-    }
-
-    /* Progress */
-    .progress-block {
-      display: none;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .progress-track {
-      height: 2px;
-      background: var(--border2);
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: var(--gold);
-      width: 0%;
-      transition: width 0.4s ease;
-    }
-
-    .progress-label {
-      font-size: 10px;
-      color: var(--muted);
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .status-line {
-      font-size: 10px;
-      color: var(--muted);
-      min-height: 16px;
-      line-height: 1.4;
-    }
-
-    .status-line.ok { color: var(--green); }
-    .status-line.err { color: var(--red); }
-
-    /* ── OUTPUT PANEL ── */
-    .output-panel {
-      padding: 32px;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-
-    .output-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 16px;
-    }
-
-    .output-title {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .output-count {
-      font-size: 10px;
-      color: var(--muted);
-    }
-
-    .empty-state {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      color: var(--muted);
-      text-align: center;
-      padding: 80px 0;
-    }
-
-    .empty-icon {
-      font-size: 48px;
-      opacity: 0.3;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 900;
-      letter-spacing: -2px;
-      color: var(--gold-dim);
-    }
-
-    .empty-text {
-      font-size: 11px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-    }
-
-    /* Image grid */
-    .image-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 8px;
-    }
-
-    .img-card {
-      background: var(--surface);
-      border: 1px solid var(--border2);
-      overflow: hidden;
-      position: relative;
-    }
-
-    .img-card img {
-      width: 100%;
-      display: block;
-      aspect-ratio: 16/10;
-      object-fit: cover;
-    }
-
-    .img-card .img-footer {
-      padding: 8px 10px;
-      font-size: 9px;
-      color: var(--muted);
-      letter-spacing: 1px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .img-card .img-num {
-      color: var(--gold-dim);
-      font-weight: bold;
-    }
-
-    .img-card.img-loading {
-      min-height: 180px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .loading-inner {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .spinner {
-      width: 24px;
-      height: 24px;
-      border: 2px solid var(--border2);
-      border-top-color: var(--gold);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .loading-label {
-      font-size: 9px;
-      letter-spacing: 2px;
-      color: var(--muted);
-      text-transform: uppercase;
-    }
-
-    .img-card.img-error {
-      min-height: 100px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .error-inner {
-      text-align: center;
-      padding: 16px;
-    }
-
-    .error-tag {
-      font-size: 9px;
-      letter-spacing: 2px;
-      color: var(--red);
-      text-transform: uppercase;
-    }
-
-    .error-msg {
-      font-size: 10px;
-      color: var(--muted);
-      margin-top: 4px;
-      max-width: 200px;
-    }
-
-    /* download section */
-    .download-block {
-      display: none;
-      padding-top: 8px;
-    }
-
-    /* responsive */
-    @media (max-width: 860px) {
-      .main { grid-template-columns: 1fr; }
-      .sidebar { border-right: none; border-bottom: 1px solid var(--border2); }
-      .header { padding: 24px; }
-      .header-right { display: none; }
-    }
-
-    @media (max-width: 520px) {
-      .header h1 { font-size: 30px; }
-      .image-grid { grid-template-columns: 1fr 1fr; }
-    }
+    body { background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;min-height:100vh;padding:0;overflow-x:hidden; }
+    body::before { content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:999;opacity:0.4; }
+    .header { border-bottom:1px solid var(--border2);padding:32px 48px 24px;display:grid;grid-template-columns:1fr auto;align-items:end;gap:24px; }
+    .header-eyebrow { font-size:10px;letter-spacing:4px;color:var(--gold-dim);text-transform:uppercase;margin-bottom:10px; }
+    .header h1 { font-family:'Barlow Condensed',sans-serif;font-size:clamp(36px,5vw,64px);font-weight:900;line-height:0.9;color:var(--white);letter-spacing:-1px;text-transform:uppercase; }
+    .header h1 span { color:var(--gold);font-style:italic; }
+    .header-sub { font-size:11px;color:var(--muted);margin-top:10px;line-height:1.6; }
+    .status-badge { display:flex;align-items:center;gap:8px;padding:8px 16px;border:1px solid var(--border2);font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;white-space:nowrap; }
+    .status-badge.active { border-color:var(--green);color:var(--green); }
+    .status-dot { width:6px;height:6px;border-radius:50%;background:currentColor;animation:pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+    .main { display:grid;grid-template-columns:380px 1fr;min-height:calc(100vh - 120px); }
+    .sidebar { border-right:1px solid var(--border2);padding:32px;display:flex;flex-direction:column;gap:28px; }
+    .field-group { display:flex;flex-direction:column;gap:8px; }
+    .field-label { font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold-dim);display:flex;align-items:center;gap:8px; }
+    .field-label::before { content:attr(data-n);display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border:1px solid var(--gold-dim);font-size:9px;flex-shrink:0; }
+    .divider { height:1px;background:var(--border); }
+    input[type="password"],input[type="text"],select,textarea { background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:11px 14px;font-family:'Share Tech Mono',monospace;font-size:12px;width:100%;outline:none;transition:border-color 0.15s,background 0.15s;-webkit-appearance:none; }
+    input:focus,select:focus,textarea:focus { border-color:var(--gold);background:var(--surface2); }
+    input::placeholder,textarea::placeholder { color:var(--muted); }
+    select { cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23c9a84c' d='M5 6L0 0h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px; }
+    select option { background:var(--surface2); }
+    .key-row { display:grid;grid-template-columns:1fr auto;gap:8px; }
+    .btn { background:var(--gold);color:#0c0b09;border:none;padding:12px 20px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:opacity 0.15s,transform 0.1s;white-space:nowrap; }
+    .btn:hover:not(:disabled){opacity:0.85}.btn:active:not(:disabled){transform:translateY(1px)}.btn:disabled{opacity:0.35;cursor:not-allowed}
+    .btn-outline { background:transparent;border:1px solid var(--border2);color:var(--muted);font-size:11px;padding:11px 16px; }
+    .btn-outline:hover:not(:disabled){border-color:var(--gold);color:var(--gold);opacity:1}
+    .btn-success { background:var(--green);color:var(--white);width:100%;padding:14px;font-size:15px; }
+    .btn-row { display:grid;grid-template-columns:1fr auto;gap:8px; }
+    textarea { min-height:220px;resize:vertical;line-height:1.7;font-size:11px; }
+    .count-row { display:flex;justify-content:space-between;align-items:center; }
+    .prompt-count { font-size:10px;color:var(--muted); }
+    .progress-block { display:none;flex-direction:column;gap:8px; }
+    .progress-track { height:2px;background:var(--border2);overflow:hidden; }
+    .progress-fill { height:100%;background:var(--gold);width:0%;transition:width 0.4s ease; }
+    .progress-label { font-size:10px;color:var(--muted);display:flex;justify-content:space-between; }
+    .status-line { font-size:10px;color:var(--muted);min-height:16px;line-height:1.4; }
+    .status-line.ok{color:var(--green)}.status-line.err{color:var(--red)}
+    .output-panel { padding:32px;display:flex;flex-direction:column;gap:24px; }
+    .output-header { display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:16px; }
+    .output-title { font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted); }
+    .output-count { font-size:10px;color:var(--muted); }
+    .empty-state { flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:var(--muted);text-align:center;padding:80px 0; }
+    .empty-icon { font-size:48px;opacity:0.3;font-family:'Barlow Condensed',sans-serif;font-weight:900;letter-spacing:-2px;color:var(--gold-dim); }
+    .empty-text { font-size:11px;letter-spacing:2px;text-transform:uppercase; }
+    .image-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px; }
+    .img-card { background:var(--surface);border:1px solid var(--border2);overflow:hidden;position:relative; }
+    .img-card img { width:100%;display:block;aspect-ratio:16/10;object-fit:cover; }
+    .img-card .img-footer { padding:8px 10px;font-size:9px;color:var(--muted);letter-spacing:1px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center; }
+    .img-card .img-num { color:var(--gold-dim);font-weight:bold; }
+    .img-card.img-loading { min-height:180px;display:flex;align-items:center;justify-content:center; }
+    .loading-inner { display:flex;flex-direction:column;align-items:center;gap:12px; }
+    .spinner { width:24px;height:24px;border:2px solid var(--border2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite; }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loading-label { font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase; }
+    .img-card.img-error { min-height:100px;display:flex;align-items:center;justify-content:center; }
+    .error-inner { text-align:center;padding:16px; }
+    .error-tag { font-size:9px;letter-spacing:2px;color:var(--red);text-transform:uppercase; }
+    .error-msg { font-size:10px;color:var(--muted);margin-top:4px;max-width:200px; }
+    .download-block { display:none;padding-top:8px; }
+    @media(max-width:860px){.main{grid-template-columns:1fr}.sidebar{border-right:none;border-bottom:1px solid var(--border2)}.header{padding:24px}.header-right{display:none}}
+    @media(max-width:520px){.header h1{font-size:30px}.image-grid{grid-template-columns:1fr 1fr}}
   </style>
 </head>
 <body>
-
-  <!-- HEADER -->
   <header class="header">
     <div>
-      <div class="header-eyebrow">Nano Banana Pro · Gemini 3 · Batch Generation</div>
+      <div class="header-eyebrow">OpenRouter · Nano Banana Pro · Batch Generation</div>
       <h1>Batch <span>Image</span><br>Generator</h1>
       <p class="header-sub">Enter prompts · generate via Nano Banana Pro · download ZIP</p>
     </div>
@@ -493,119 +92,85 @@
     </div>
   </header>
 
-  <!-- MAIN -->
   <div class="main">
-
-    <!-- SIDEBAR -->
     <aside class="sidebar">
-
-      <!-- API KEY -->
       <div class="field-group">
-        <div class="field-label" data-n="1">Google AI Studio API Key</div>
+        <div class="field-label" data-n="1">OpenRouter API Key</div>
         <div class="key-row">
-          <input type="password" id="apiKey" placeholder="AIzaSy..." />
+          <input type="password" id="apiKey" placeholder="sk-or-..." />
           <button class="btn" onclick="saveKey()">Save</button>
         </div>
       </div>
-
       <div class="divider"></div>
-
-      <!-- MODEL -->
       <div class="field-group">
         <div class="field-label" data-n="2">Model</div>
         <select id="model">
-          <option value="gemini-3-pro-image">Nano Banana Pro — Best Quality</option>
-          <option value="gemini-3.1-flash-image">Nano Banana 2 — Faster</option>
+          <option value="google/gemini-3-pro-image-preview">Nano Banana Pro — Best Quality</option>
+          <option value="google/gemini-3.1-flash-image-preview">Nano Banana 2 — Faster</option>
         </select>
       </div>
-
       <div class="divider"></div>
-
-      <!-- PROMPTS -->
       <div class="field-group" style="flex:1">
         <div class="field-label" data-n="3">Prompts — one per line</div>
         <textarea id="prompts" placeholder="Wide establishing shot of a bombed-out Eastern European roadside in spring 1945...&#10;&#10;Close-up of a Soviet officer examining a map, Eastern Front...&#10;&#10;Aerial view of a destroyed Polish village, overcast sky..."></textarea>
         <div class="count-row">
           <span class="prompt-count" id="promptCount">0 prompts</span>
-          <span class="prompt-count" id="charCount"></span>
         </div>
       </div>
-
       <div class="divider"></div>
-
-      <!-- GENERATE -->
       <div class="field-group">
         <div class="btn-row">
           <button class="btn" id="generateBtn" onclick="startGeneration()">Generate All</button>
           <button class="btn btn-outline" onclick="clearAll()">Clear</button>
         </div>
-
-        <!-- Progress -->
         <div class="progress-block" id="progressBlock">
-          <div class="progress-track">
-            <div class="progress-fill" id="progressFill"></div>
-          </div>
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
           <div class="progress-label">
             <span id="progressText">0 / 0</span>
             <span id="progressPct">0%</span>
           </div>
           <div class="status-line" id="statusLine"></div>
         </div>
-
-        <!-- Download -->
         <div class="download-block" id="downloadBlock">
           <button class="btn btn-success" onclick="downloadZip()">⬇ Download ZIP</button>
         </div>
       </div>
-
     </aside>
 
-    <!-- OUTPUT -->
     <section class="output-panel">
       <div class="output-header">
         <span class="output-title">Output</span>
         <span class="output-count" id="outputCount"></span>
       </div>
-
       <div class="empty-state" id="emptyState">
         <div class="empty-icon">[ ]</div>
         <div class="empty-text">No images generated yet</div>
       </div>
-
       <div class="image-grid" id="imageGrid"></div>
     </section>
-
   </div>
 
   <script>
     let generatedImages = [];
 
-    // ── Init ──
     window.onload = () => {
-      const saved = localStorage.getItem('gemini_api_key');
-      if (saved) {
-        document.getElementById('apiKey').value = saved;
-        setKeyBadge(true);
-      }
+      const saved = localStorage.getItem('openrouter_api_key');
+      if (saved) { document.getElementById('apiKey').value = saved; setKeyBadge(true); }
       updateCounts();
     };
 
-    // ── Key ──
     function saveKey() {
       const k = document.getElementById('apiKey').value.trim();
       if (!k) return;
-      localStorage.setItem('gemini_api_key', k);
+      localStorage.setItem('openrouter_api_key', k);
       setKeyBadge(true);
     }
 
     function setKeyBadge(active) {
-      const badge = document.getElementById('keyBadge');
-      const text  = document.getElementById('keyBadgeText');
-      badge.className = 'status-badge' + (active ? ' active' : '');
-      text.textContent = active ? 'Key Saved' : 'No API Key';
+      document.getElementById('keyBadge').className = 'status-badge' + (active ? ' active' : '');
+      document.getElementById('keyBadgeText').textContent = active ? 'Key Saved' : 'No API Key';
     }
 
-    // ── Counts ──
     document.getElementById('prompts').addEventListener('input', updateCounts);
 
     function updateCounts() {
@@ -614,13 +179,9 @@
     }
 
     function getPrompts() {
-      return document.getElementById('prompts').value
-        .split('\n')
-        .map(l => l.trim())
-        .filter(l => l.length > 0);
+      return document.getElementById('prompts').value.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     }
 
-    // ── Status ──
     function setStatus(msg, type = '') {
       const el = document.getElementById('statusLine');
       el.textContent = msg;
@@ -634,16 +195,16 @@
       document.getElementById('progressPct').textContent = pct + '%';
     }
 
-    // ── API Call ──
     async function generateImage(prompt, apiKey, model) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
-      const res = await fetch(url, {
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseModalities: ['IMAGE', 'TEXT'] }
+          model: model,
+          messages: [{ role: 'user', content: prompt }]
         })
       });
 
@@ -653,27 +214,36 @@
       }
 
       const data = await res.json();
-      const parts = data?.candidates?.[0]?.content?.parts || [];
-      const imgPart = parts.find(p => p.inlineData);
+      const content = data?.choices?.[0]?.message?.content;
+      if (!content) throw new Error('No image in response');
 
-      if (!imgPart) throw new Error('No image in response');
+      // Handle array content (multimodal response)
+      if (Array.isArray(content)) {
+        const imgPart = content.find(p => p.type === 'image_url');
+        if (imgPart) {
+          const dataUrl = imgPart.image_url?.url || '';
+          const match = dataUrl.match(/data:(image\/\w+);base64,(.+)/);
+          if (match) return { mimeType: match[1], data: match[2] };
+        }
+      }
 
-      return {
-        mimeType: imgPart.inlineData.mimeType || 'image/png',
-        data:     imgPart.inlineData.data
-      };
+      // Handle string content with embedded base64
+      if (typeof content === 'string') {
+        const match = content.match(/data:(image\/\w+);base64,([A-Za-z0-9+/=]+)/);
+        if (match) return { mimeType: match[1], data: match[2] };
+      }
+
+      throw new Error('No image data found in response');
     }
 
-    // ── Generate ──
     async function startGeneration() {
       const apiKey = document.getElementById('apiKey').value.trim();
       const model  = document.getElementById('model').value;
       const prompts = getPrompts();
 
-      if (!apiKey) { setStatus('Enter and save your API key first.', 'err'); return; }
+      if (!apiKey) { setStatus('Enter and save your OpenRouter API key first.', 'err'); return; }
       if (!prompts.length) { setStatus('Enter at least one prompt.', 'err'); return; }
 
-      // Reset UI
       generatedImages = [];
       document.getElementById('imageGrid').innerHTML = '';
       document.getElementById('emptyState').style.display = 'none';
@@ -684,16 +254,11 @@
       setStatus('');
       updateProgress(0, prompts.length);
 
-      // Placeholder cards
       prompts.forEach((_, i) => {
         const card = document.createElement('div');
         card.className = 'img-card img-loading';
         card.id = `card-${i}`;
-        card.innerHTML = `
-          <div class="loading-inner">
-            <div class="spinner"></div>
-            <div class="loading-label">Generating ${i + 1}…</div>
-          </div>`;
+        card.innerHTML = `<div class="loading-inner"><div class="spinner"></div><div class="loading-label">Generating ${i + 1}…</div></div>`;
         document.getElementById('imageGrid').appendChild(card);
       });
 
@@ -702,13 +267,11 @@
       for (let i = 0; i < prompts.length; i++) {
         const prompt = prompts[i];
         setStatus(`[${i + 1}/${prompts.length}] ${prompt.substring(0, 70)}${prompt.length > 70 ? '…' : ''}`);
-
         const card = document.getElementById(`card-${i}`);
 
         try {
           const img = await generateImage(prompt, apiKey, model);
           const src = `data:${img.mimeType};base64,${img.data}`;
-
           card.className = 'img-card';
           card.innerHTML = `
             <img src="${src}" alt="Image ${i + 1}" />
@@ -716,21 +279,11 @@
               <span class="img-num">#${String(i + 1).padStart(3, '0')}</span>
               <span>${prompt.substring(0, 40)}${prompt.length > 40 ? '…' : ''}</span>
             </div>`;
-
-          generatedImages.push({
-            filename: `image_${String(i + 1).padStart(3, '0')}.png`,
-            data:     img.data,
-            mimeType: img.mimeType
-          });
-
+          generatedImages.push({ filename: `image_${String(i + 1).padStart(3, '0')}.png`, data: img.data, mimeType: img.mimeType });
           ok++;
         } catch (err) {
           card.className = 'img-card img-error';
-          card.innerHTML = `
-            <div class="error-inner">
-              <div class="error-tag">Generation Failed</div>
-              <div class="error-msg">${err.message}</div>
-            </div>`;
+          card.innerHTML = `<div class="error-inner"><div class="error-tag">Generation Failed</div><div class="error-msg">${err.message}</div></div>`;
           fail++;
           console.error(`Prompt ${i + 1}:`, err);
         }
@@ -738,7 +291,6 @@
         updateProgress(i + 1, prompts.length);
       }
 
-      // Done
       document.getElementById('generateBtn').disabled = false;
       document.getElementById('outputCount').textContent = `${ok} generated`;
 
@@ -746,24 +298,20 @@
         setStatus(`Done — ${ok} image${ok !== 1 ? 's' : ''} generated${fail ? `, ${fail} failed` : ''}.`, 'ok');
         document.getElementById('downloadBlock').style.display = 'block';
       } else {
-        setStatus('All generations failed. Check your API key.', 'err');
+        setStatus('All generations failed. Check your API key and credits.', 'err');
         document.getElementById('emptyState').style.display = 'flex';
       }
     }
 
-    // ── Download ZIP ──
     async function downloadZip() {
       if (!generatedImages.length) return;
-
-      const zip    = new JSZip();
+      const zip = new JSZip();
       const folder = zip.folder('batch_images');
-
       generatedImages.forEach(img => folder.file(img.filename, img.data, { base64: true }));
-
       const blob = await zip.generateAsync({ type: 'blob' });
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href     = url;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
       a.download = `batch_images_${new Date().toISOString().slice(0,10)}.zip`;
       document.body.appendChild(a);
       a.click();
@@ -771,7 +319,6 @@
       URL.revokeObjectURL(url);
     }
 
-    // ── Clear ──
     function clearAll() {
       document.getElementById('prompts').value = '';
       document.getElementById('imageGrid').innerHTML = '';
