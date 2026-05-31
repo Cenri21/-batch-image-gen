@@ -196,7 +196,8 @@
     }
 
     async function generateImage(prompt, apiKey, model) {
-      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      // Try images/generations endpoint first
+      const res = await fetch('https://openrouter.ai/api/v1/images/generations', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -206,7 +207,9 @@
         },
         body: JSON.stringify({
           model: model,
-          messages: [{ role: 'user', content: prompt }]
+          prompt: prompt,
+          n: 1,
+          response_format: 'b64_json'
         })
       });
 
@@ -216,41 +219,19 @@
       }
 
       const data = await res.json();
-      console.log('OpenRouter raw response:', JSON.stringify(data));
+      console.log('OpenRouter images response:', JSON.stringify(data).substring(0, 300));
 
-      const message = data?.choices?.[0]?.message;
-      if (!message) throw new Error('No message in response');
+      const imageData = data?.data?.[0];
+      if (!imageData) throw new Error(`No image data. Response: ${JSON.stringify(data).substring(0, 200)}`);
 
-      const content = message.content;
-
-      // Case 1: content is an array of parts
-      if (Array.isArray(content)) {
-        for (const part of content) {
-          if (part.type === 'image_url') {
-            const url = part.image_url?.url;
-            if (url) {
-              if (url.startsWith('data:')) {
-                const match = url.match(/data:(image\/\w+);base64,(.+)/s);
-                if (match) return { isUrl: false, mimeType: match[1], data: match[2] };
-              }
-              return { isUrl: true, url };
-            }
-          }
-        }
+      if (imageData.b64_json) {
+        return { isUrl: false, mimeType: 'image/png', data: imageData.b64_json };
+      }
+      if (imageData.url) {
+        return { isUrl: true, url: imageData.url };
       }
 
-      // Case 2: content is a string
-      if (typeof content === 'string') {
-        // Check for base64 data URL in string
-        const b64match = content.match(/data:(image\/\w+);base64,([A-Za-z0-9+/=\n]+)/s);
-        if (b64match) return { isUrl: false, mimeType: b64match[1], data: b64match[2].replace(/\n/g,'') };
-
-        // Check for image URL in string
-        const urlMatch = content.match(/https?:\/\/\S+\.(png|jpg|jpeg|webp|gif)/i);
-        if (urlMatch) return { isUrl: true, url: urlMatch[0] };
-      }
-
-      throw new Error(`No image found. Response: ${JSON.stringify(content).substring(0, 200)}`);
+      throw new Error('No image in response');
     }
 
     async function imgToBase64(url) {
