@@ -200,7 +200,9 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'Batch Image Generator'
         },
         body: JSON.stringify({
           model: model,
@@ -214,26 +216,54 @@
       }
 
       const data = await res.json();
-      const content = data?.choices?.[0]?.message?.content;
-      if (!content) throw new Error('No image in response');
+      console.log('OpenRouter raw response:', JSON.stringify(data));
 
-      // Handle array content (multimodal response)
+      const message = data?.choices?.[0]?.message;
+      if (!message) throw new Error('No message in response');
+
+      const content = message.content;
+
+      // Case 1: content is an array of parts
       if (Array.isArray(content)) {
-        const imgPart = content.find(p => p.type === 'image_url');
-        if (imgPart) {
-          const dataUrl = imgPart.image_url?.url || '';
-          const match = dataUrl.match(/data:(image\/\w+);base64,(.+)/);
-          if (match) return { mimeType: match[1], data: match[2] };
+        for (const part of content) {
+          if (part.type === 'image_url') {
+            const url = part.image_url?.url;
+            if (url) {
+              if (url.startsWith('data:')) {
+                const match = url.match(/data:(image\/\w+);base64,(.+)/s);
+                if (match) return { isUrl: false, mimeType: match[1], data: match[2] };
+              }
+              return { isUrl: true, url };
+            }
+          }
         }
       }
 
-      // Handle string content with embedded base64
+      // Case 2: content is a string
       if (typeof content === 'string') {
-        const match = content.match(/data:(image\/\w+);base64,([A-Za-z0-9+/=]+)/);
-        if (match) return { mimeType: match[1], data: match[2] };
+        // Check for base64 data URL in string
+        const b64match = content.match(/data:(image\/\w+);base64,([A-Za-z0-9+/=\n]+)/s);
+        if (b64match) return { isUrl: false, mimeType: b64match[1], data: b64match[2].replace(/\n/g,'') };
+
+        // Check for image URL in string
+        const urlMatch = content.match(/https?:\/\/\S+\.(png|jpg|jpeg|webp|gif)/i);
+        if (urlMatch) return { isUrl: true, url: urlMatch[0] };
       }
 
-      throw new Error('No image data found in response');
+      throw new Error(`No image found. Response: ${JSON.stringify(content).substring(0, 200)}`);
+    }
+
+    async function imgToBase64(url) {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const b64 = reader.result.split(',')[1];
+          resolve({ data: b64, mimeType: blob.type || 'image/png' });
+        };
+        reader.readAsDataURL(blob);
+      });
     }
 
     async function startGeneration() {
@@ -271,7 +301,26 @@
 
         try {
           const img = await generateImage(prompt, apiKey, model);
-          const src = `data:${img.mimeType};base64,${img.data}`;
+
+          let src, b64data, mimeType;
+
+          if (img.isUrl) {
+            src = img.url;
+            // Try to convert to base64 for ZIP download
+            try {
+              const converted = await imgToBase64(img.url);
+              b64data = converted.data;
+              mimeType = converted.mimeType;
+            } catch {
+              b64data = null;
+              mimeType = 'image/png';
+            }
+          } else {
+            mimeType = img.mimeType;
+            b64data = img.data;
+            src = `data:${mimeType};base64,${b64data}`;
+          }
+
           card.className = 'img-card';
           card.innerHTML = `
             <img src="${src}" alt="Image ${i + 1}" />
@@ -279,7 +328,15 @@
               <span class="img-num">#${String(i + 1).padStart(3, '0')}</span>
               <span>${prompt.substring(0, 40)}${prompt.length > 40 ? '…' : ''}</span>
             </div>`;
-          generatedImages.push({ filename: `image_${String(i + 1).padStart(3, '0')}.png`, data: img.data, mimeType: img.mimeType });
+
+          if (b64data) {
+            generatedImages.push({
+              filename: `image_${String(i + 1).padStart(3, '0')}.png`,
+              data: b64data,
+              mimeType
+            });
+          }
+
           ok++;
         } catch (err) {
           card.className = 'img-card img-error';
