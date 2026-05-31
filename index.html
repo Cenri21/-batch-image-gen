@@ -196,8 +196,7 @@
     }
 
     async function generateImage(prompt, apiKey, model) {
-      // Try images/generations endpoint first
-      const res = await fetch('https://openrouter.ai/api/v1/images/generations', {
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -207,9 +206,8 @@
         },
         body: JSON.stringify({
           model: model,
-          prompt: prompt,
-          n: 1,
-          response_format: 'b64_json'
+          messages: [{ role: 'user', content: prompt }],
+          modalities: ['image', 'text']
         })
       });
 
@@ -219,19 +217,30 @@
       }
 
       const data = await res.json();
-      console.log('OpenRouter images response:', JSON.stringify(data).substring(0, 300));
+      const message = data?.choices?.[0]?.message;
+      if (!message) throw new Error('No message in response');
 
-      const imageData = data?.data?.[0];
-      if (!imageData) throw new Error(`No image data. Response: ${JSON.stringify(data).substring(0, 200)}`);
-
-      if (imageData.b64_json) {
-        return { isUrl: false, mimeType: 'image/png', data: imageData.b64_json };
+      // OpenRouter returns generated images in message.images[]
+      const images = message.images;
+      if (Array.isArray(images) && images.length > 0) {
+        const url = images[0]?.image_url?.url || images[0]?.url;
+        if (url) {
+          if (url.startsWith('data:')) {
+            const match = url.match(/data:(image\/\w+);base64,(.+)/s);
+            if (match) return { isUrl: false, mimeType: match[1], data: match[2] };
+          }
+          return { isUrl: true, url };
+        }
       }
-      if (imageData.url) {
-        return { isUrl: true, url: imageData.url };
+
+      // Fallback: check content for embedded base64
+      const content = message.content;
+      if (typeof content === 'string') {
+        const b64 = content.match(/data:(image\/\w+);base64,([A-Za-z0-9+/=\n]+)/s);
+        if (b64) return { isUrl: false, mimeType: b64[1], data: b64[2].replace(/\n/g,'') };
       }
 
-      throw new Error('No image in response');
+      throw new Error('No image returned by model');
     }
 
     async function imgToBase64(url) {
