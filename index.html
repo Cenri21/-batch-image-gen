@@ -91,8 +91,17 @@
         </select>
       </div>
       <div class="divider"></div>
+      <div class="field-group">
+        <div class="field-label" data-n="2">Resolution</div>
+        <select id="resolution">
+          <option value="1K">1K — Lowest Cost (recommended)</option>
+          <option value="2K">2K — Higher Detail</option>
+          <option value="4K">4K — Maximum Detail (most expensive)</option>
+        </select>
+      </div>
+      <div class="divider"></div>
       <div class="field-group" style="flex:1">
-        <div class="field-label" data-n="2">Prompts — one per line</div>
+        <div class="field-label" data-n="3">Prompts — one per line</div>
         <textarea id="prompts" placeholder="Wide establishing shot of a bombed-out Eastern European roadside in spring 1945...&#10;&#10;Close-up of a Soviet officer examining a map, Eastern Front...&#10;&#10;Aerial view of a destroyed Polish village, overcast sky..."></textarea>
         <div class="count-row">
           <span class="prompt-count" id="promptCount">0 prompts</span>
@@ -159,12 +168,11 @@
       document.getElementById('progressPct').textContent = pct + '%';
     }
 
-    // Calls our own serverless function — API key stays hidden on the server.
-    async function generateImage(prompt, model) {
+    async function generateImage(prompt, model, resolution) {
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, model })
+        body: JSON.stringify({ prompt, model, resolution })
       });
 
       if (!res.ok) {
@@ -195,6 +203,7 @@
 
     async function startGeneration() {
       const model  = document.getElementById('model').value;
+      const resolution = document.getElementById('resolution').value;
       const prompts = getPrompts();
 
       if (!prompts.length) { setStatus('Enter at least one prompt.', 'err'); return; }
@@ -225,7 +234,7 @@
         const card = document.getElementById(`card-${i}`);
 
         try {
-          const img = await generateImage(prompt, model);
+          const img = await generateImage(prompt, model, resolution);
           let src, b64data, mimeType;
 
           if (img.isUrl) {

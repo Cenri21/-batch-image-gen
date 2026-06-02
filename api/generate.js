@@ -1,6 +1,4 @@
 // Vercel Serverless Function — keeps the OpenRouter API key hidden server-side.
-// The key is read from the OPENROUTER_API_KEY environment variable in Vercel.
-
 export const config = { maxDuration: 60 };
 
 export default async function handler(req, res) {
@@ -13,10 +11,13 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server API key not configured' });
   }
 
-  const { prompt, model } = req.body || {};
+  const { prompt, model, resolution } = req.body || {};
   if (!prompt) {
     return res.status(400).json({ error: 'Missing prompt' });
   }
+
+  // Resolution: 1K (default, cheapest), 2K, or 4K
+  const size = ['1K', '2K', '4K'].includes(resolution) ? resolution : '1K';
 
   try {
     const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -30,7 +31,8 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: model || 'google/gemini-3-pro-image-preview',
         messages: [{ role: 'user', content: prompt }],
-        modalities: ['image', 'text']
+        modalities: ['image', 'text'],
+        image_config: { image_size: size }
       })
     });
 
