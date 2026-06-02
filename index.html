@@ -146,6 +146,7 @@
   <script>
     let generatedImages = [];
     let imageCounter = 0;
+    let isGenerating = false;
 
     window.onload = () => updateCounts();
     document.getElementById('prompts').addEventListener('input', updateCounts);
@@ -212,6 +213,7 @@
 
       if (!prompts.length) { setStatus('Enter at least one prompt.', 'err'); return; }
 
+      isGenerating = true;
       // NOTE: we do NOT clear previous images — new ones are appended
       document.getElementById('emptyState').style.display = 'none';
       document.getElementById('downloadBlock').style.display = 'none';
@@ -277,6 +279,7 @@
       }
 
       imageCounter += prompts.length;
+      isGenerating = false;
 
       document.getElementById('generateBtn').disabled = false;
       document.getElementById('outputCount').textContent = `${generatedImages.length} total`;
@@ -291,17 +294,31 @@
       }
     }
 
-    // Clears all generated images from the output
+    // Clears only FINISHED images — anything still generating is left alone
     function clearImages() {
-      document.getElementById('imageGrid').innerHTML = '';
+      const grid = document.getElementById('imageGrid');
+      // Remove every card that is NOT currently loading (keeps spinners)
+      Array.from(grid.children).forEach(card => {
+        if (!card.classList.contains('img-loading')) card.remove();
+      });
+
+      // Wipe the downloadable list (finished images only — in-progress ones re-add when done)
       generatedImages = [];
-      imageCounter = 0;
-      document.getElementById('emptyState').style.display = 'flex';
       document.getElementById('downloadBlock').style.display = 'none';
-      document.getElementById('clearImagesBtn').style.display = 'none';
-      document.getElementById('outputCount').textContent = '';
-      document.getElementById('progressBlock').style.display = 'none';
-      setStatus('');
+
+      if (!isGenerating) {
+        // Nothing running — full reset
+        imageCounter = 0;
+        document.getElementById('emptyState').style.display = 'flex';
+        document.getElementById('progressBlock').style.display = 'none';
+        document.getElementById('clearImagesBtn').style.display = 'none';
+        document.getElementById('outputCount').textContent = '';
+        setStatus('');
+      } else {
+        // Still generating — keep counters intact so in-flight images finish correctly
+        document.getElementById('outputCount').textContent = '0 total';
+        setStatus('Cleared finished images. Still generating…');
+      }
     }
 
     async function downloadZip() {
