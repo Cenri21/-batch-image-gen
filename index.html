@@ -111,7 +111,7 @@
       <div class="field-group">
         <div class="btn-row">
           <button class="btn" id="generateBtn" onclick="startGeneration()">Generate All</button>
-          <button class="btn btn-outline" onclick="clearAll()">Clear</button>
+          <button class="btn btn-outline" onclick="clearAll()">Clear Prompts</button>
         </div>
         <div class="progress-block" id="progressBlock">
           <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
@@ -130,7 +130,10 @@
     <section class="output-panel">
       <div class="output-header">
         <span class="output-title">Output</span>
-        <span class="output-count" id="outputCount"></span>
+        <div style="display:flex;align-items:center;gap:16px;">
+          <span class="output-count" id="outputCount"></span>
+          <button class="btn btn-outline" id="clearImagesBtn" onclick="clearImages()" style="display:none;">Clear Images</button>
+        </div>
       </div>
       <div class="empty-state" id="emptyState">
         <div class="empty-icon">[ ]</div>
@@ -142,6 +145,7 @@
 
   <script>
     let generatedImages = [];
+    let imageCounter = 0;
 
     window.onload = () => updateCounts();
     document.getElementById('prompts').addEventListener('input', updateCounts);
@@ -208,21 +212,22 @@
 
       if (!prompts.length) { setStatus('Enter at least one prompt.', 'err'); return; }
 
-      generatedImages = [];
-      document.getElementById('imageGrid').innerHTML = '';
+      // NOTE: we do NOT clear previous images — new ones are appended
       document.getElementById('emptyState').style.display = 'none';
       document.getElementById('downloadBlock').style.display = 'none';
       document.getElementById('progressBlock').style.display = 'flex';
       document.getElementById('generateBtn').disabled = true;
-      document.getElementById('outputCount').textContent = '';
       setStatus('');
       updateProgress(0, prompts.length);
 
+      // Create placeholder cards for THIS batch with unique IDs
+      const batchStart = imageCounter;
       prompts.forEach((_, i) => {
+        const n = batchStart + i + 1;
         const card = document.createElement('div');
         card.className = 'img-card img-loading';
-        card.id = `card-${i}`;
-        card.innerHTML = `<div class="loading-inner"><div class="spinner"></div><div class="loading-label">Generating ${i + 1}…</div></div>`;
+        card.id = `card-${batchStart + i}`;
+        card.innerHTML = `<div class="loading-inner"><div class="spinner"></div><div class="loading-label">Generating ${n}…</div></div>`;
         document.getElementById('imageGrid').appendChild(card);
       });
 
@@ -230,8 +235,9 @@
 
       for (let i = 0; i < prompts.length; i++) {
         const prompt = prompts[i];
+        const n = batchStart + i + 1;
         setStatus(`[${i + 1}/${prompts.length}] ${prompt.substring(0, 70)}${prompt.length > 70 ? '…' : ''}`);
-        const card = document.getElementById(`card-${i}`);
+        const card = document.getElementById(`card-${batchStart + i}`);
 
         try {
           const img = await generateImage(prompt, model, resolution);
@@ -250,36 +256,52 @@
 
           card.className = 'img-card';
           card.innerHTML = `
-            <img src="${src}" alt="Image ${i + 1}" />
+            <img src="${src}" alt="Image ${n}" />
             <div class="img-footer">
-              <span class="img-num">#${String(i + 1).padStart(3, '0')}</span>
+              <span class="img-num">#${String(n).padStart(3, '0')}</span>
               <span>${prompt.substring(0, 40)}${prompt.length > 40 ? '…' : ''}</span>
             </div>`;
 
           if (b64data) {
-            generatedImages.push({ filename: `image_${String(i + 1).padStart(3, '0')}.png`, data: b64data, mimeType });
+            generatedImages.push({ filename: `image_${String(n).padStart(3, '0')}.png`, data: b64data, mimeType });
           }
           ok++;
         } catch (err) {
           card.className = 'img-card img-error';
           card.innerHTML = `<div class="error-inner"><div class="error-tag">Generation Failed</div><div class="error-msg">${err.message}</div></div>`;
           fail++;
-          console.error(`Prompt ${i + 1}:`, err);
+          console.error(`Prompt ${n}:`, err);
         }
 
         updateProgress(i + 1, prompts.length);
       }
 
-      document.getElementById('generateBtn').disabled = false;
-      document.getElementById('outputCount').textContent = `${ok} generated`;
+      imageCounter += prompts.length;
 
-      if (ok > 0) {
-        setStatus(`Done — ${ok} image${ok !== 1 ? 's' : ''} generated${fail ? `, ${fail} failed` : ''}.`, 'ok');
+      document.getElementById('generateBtn').disabled = false;
+      document.getElementById('outputCount').textContent = `${generatedImages.length} total`;
+
+      if (generatedImages.length > 0) {
+        setStatus(`Done — ${ok} added${fail ? `, ${fail} failed` : ''}. ${generatedImages.length} total.`, 'ok');
         document.getElementById('downloadBlock').style.display = 'block';
+        document.getElementById('clearImagesBtn').style.display = 'inline-block';
       } else {
         setStatus('All generations failed. Try again.', 'err');
         document.getElementById('emptyState').style.display = 'flex';
       }
+    }
+
+    // Clears all generated images from the output
+    function clearImages() {
+      document.getElementById('imageGrid').innerHTML = '';
+      generatedImages = [];
+      imageCounter = 0;
+      document.getElementById('emptyState').style.display = 'flex';
+      document.getElementById('downloadBlock').style.display = 'none';
+      document.getElementById('clearImagesBtn').style.display = 'none';
+      document.getElementById('outputCount').textContent = '';
+      document.getElementById('progressBlock').style.display = 'none';
+      setStatus('');
     }
 
     async function downloadZip() {
@@ -298,16 +320,10 @@
       URL.revokeObjectURL(url);
     }
 
+    // Sidebar "Clear" button — clears only the prompt text box (not your images)
     function clearAll() {
       document.getElementById('prompts').value = '';
-      document.getElementById('imageGrid').innerHTML = '';
-      document.getElementById('emptyState').style.display = 'flex';
-      document.getElementById('downloadBlock').style.display = 'none';
-      document.getElementById('progressBlock').style.display = 'none';
-      document.getElementById('outputCount').textContent = '';
-      generatedImages = [];
       updateCounts();
-      setStatus('');
     }
   </script>
 </body>
