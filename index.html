@@ -101,8 +101,19 @@
         </select>
       </div>
       <div class="divider"></div>
+      <div class="field-group">
+        <div class="field-label" data-n="3">Aspect Ratio</div>
+        <select id="aspectRatio">
+          <option value="16:9">16:9 — YouTube / Widescreen</option>
+          <option value="1:1">1:1 — Square</option>
+          <option value="9:16">9:16 — Vertical / Shorts</option>
+          <option value="4:3">4:3 — Standard</option>
+          <option value="3:2">3:2 — Photo</option>
+        </select>
+      </div>
+      <div class="divider"></div>
       <div class="field-group" style="flex:1">
-        <div class="field-label" data-n="3">Prompts — one per line</div>
+        <div class="field-label" data-n="4">Prompts — one per line</div>
         <textarea id="prompts" placeholder="Wide establishing shot of a bombed-out Eastern European roadside in spring 1945...&#10;&#10;Close-up of a Soviet officer examining a map, Eastern Front...&#10;&#10;Aerial view of a destroyed Polish village, overcast sky..."></textarea>
         <div class="count-row">
           <span class="prompt-count" id="promptCount">0 prompts</span>
@@ -174,11 +185,11 @@
       document.getElementById('progressPct').textContent = pct + '%';
     }
 
-    async function generateImage(prompt, model, resolution) {
+    async function generateImage(prompt, model, resolution, aspectRatio) {
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, model, resolution })
+        body: JSON.stringify({ prompt, model, resolution, aspectRatio })
       });
 
       if (!res.ok) {
@@ -210,6 +221,7 @@
     async function startGeneration() {
       const model  = document.getElementById('model').value;
       const resolution = document.getElementById('resolution').value;
+      const aspectRatio = document.getElementById('aspectRatio').value;
       const prompts = getPrompts();
 
       if (!prompts.length) { setStatus('Enter at least one prompt.', 'err'); return; }
@@ -243,7 +255,7 @@
         const card = document.getElementById(`card-${batchStart + i}`);
 
         try {
-          const img = await generateImage(prompt, model, resolution);
+          const img = await generateImage(prompt, model, resolution, aspectRatio);
           let src, b64data, mimeType;
 
           if (img.isUrl) {

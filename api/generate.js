@@ -11,13 +11,15 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server API key not configured' });
   }
 
-  const { prompt, model, resolution } = req.body || {};
+  const { prompt, model, resolution, aspectRatio } = req.body || {};
   if (!prompt) {
     return res.status(400).json({ error: 'Missing prompt' });
   }
 
   // Resolution: 1K (default, cheapest), 2K, or 4K
   const size = ['1K', '2K', '4K'].includes(resolution) ? resolution : '1K';
+  // Aspect ratio: default 16:9 (YouTube/widescreen)
+  const ar = ['1:1', '16:9', '9:16', '4:3', '3:4', '3:2', '2:3'].includes(aspectRatio) ? aspectRatio : '16:9';
 
   try {
     const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -32,7 +34,7 @@ export default async function handler(req, res) {
         model: model || 'google/gemini-3-pro-image-preview',
         messages: [{ role: 'user', content: prompt }],
         modalities: ['image', 'text'],
-        image_config: { image_size: size }
+        image_config: { image_size: size, aspect_ratio: ar }
       })
     });
 
